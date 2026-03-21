@@ -33,15 +33,6 @@ Two core components:
 3. If requested slot unavailable, suggest nearby available slots in the failure notification
 4. Always notify regardless of outcome (success or failure)
 
-## Developer Organization (Claude-specific)
-
-This repo uses the following structure for Claude Code meta-files:
-- `skills/` — workflow definitions and domain knowledge
-- `commands/` — slash commands (`/tdd`, `/plan`, `/e2e`, etc.)
-- `hooks/` — trigger-based automations (pre/post-tool hooks)
-- `rules/` — always-follow guidelines (security, coding style, testing)
-- `tests/` — test suite
-
 ## Commands
 
 ```bash
