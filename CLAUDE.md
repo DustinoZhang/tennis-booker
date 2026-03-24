@@ -14,6 +14,8 @@ Node.js + TypeScript + Playwright. Core booking flow implemented. Tech stack cho
 
 ## Architecture
 
+> See [`docs/architecture.md`](docs/architecture.md) for detailed module-level documentation, data flow diagrams, and design decisions.
+
 Two core components:
 1. **Main program** — control flow, user prompts, session management, notifications
 2. **Browser module** — page access, form interaction, booking execution
@@ -40,6 +42,8 @@ npm install          # install dependencies
 npm run book         # run the booker (prompts for slot interactively)
 npm run book -- --date <YYYY-MM-DD> --time <HH:MM> --duration <30|60>  # explicit args
 npm run book -- --command "Book me a court this Thursday at 11pm for 1 hour"  # natural language (needs ANTHROPIC_API_KEY)
+npm run book -- --date 2026-03-26 --time 23:00 --duration 60 --calendar  # book + add to Google Calendar
+npm run auth:google  # one-time Google Calendar OAuth setup
 npm test             # run all tests
 npm test -- --grep "booking"  # run a single test by name
 DEBUG=true npm run book -- ...  # run with headed browser for debugging
@@ -55,6 +59,29 @@ For testing, pick a weeknight within 5 days at 22:30 or 23:00 -- those slots are
 | `COURTRESERVE_PASSWORD` | Login password |
 | `ANTHROPIC_API_KEY` | Required for `--command` natural language parsing |
 | `DEBUG` | Set to `true`/`1` to run browser in headed mode |
+| `GOOGLE_CLIENT_ID` | OAuth client ID for Google Calendar (optional, for `--calendar`) |
+| `GOOGLE_CLIENT_SECRET` | OAuth client secret for Google Calendar (optional, for `--calendar`) |
+
+## Documentation Maintenance
+
+After completing any feature implementation, bug fix, or architectural change, update all three documentation files to reflect the changes:
+
+1. **`README.md`** -- user-facing docs: CLI flags, setup instructions, examples, project structure
+2. **`CLAUDE.md`** -- developer context: commands, env vars, architecture notes, verification steps
+3. **`docs/architecture.md`** -- module-level details: data flow, module responsibilities, design decisions
+
+This is not optional. Documentation drift causes wasted time in future sessions. Update docs before committing.
+
+## Session Continuity
+
+Write a compact summary to `.claude/session-summary.md` ONLY when: (1) the user explicitly asks to wrap up, or (2) Claude is forced to shut down (context limit, SIGTERM, etc.). Never write it automatically mid-session. The summary should cover:
+
+1. **What was done** -- features added, bugs fixed, refactors completed
+2. **What's in progress** -- unfinished work, known issues, next steps
+3. **Key decisions made** -- architectural choices, trade-offs, things the user approved
+4. **Files changed** -- list of modified/created files for quick orientation
+
+This file is read automatically at the start of the next session via a SessionStart hook. Keep it under 50 lines. Overwrite (don't append) each session.
 
 ## Verification
 

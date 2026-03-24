@@ -143,6 +143,30 @@ async function main(): Promise<void> {
 
     notify(result);
 
+    // 7. Add to Google Calendar if requested
+    if (slotRequest.addToCalendar && result.status === "success" && result.slot) {
+      console.log("\nAdding to Google Calendar...");
+      try {
+        const { hasGoogleAuth, createCalendarEvent } = await import("./calendar.js");
+        if (!(await hasGoogleAuth())) {
+          console.log(
+            `\x1b[33m\x1b[1m⚠ Calendar event not created:\x1b[0m ` +
+              `Not authorized. Run \`npm run auth:google\` first.\n` +
+              `  Your court booking succeeded -- only the calendar entry was skipped.`
+          );
+        } else {
+          const eventUrl = await createCalendarEvent(result.slot, slotRequest.durationMinutes);
+          console.log(`\x1b[32m\x1b[1m✓ Calendar event created:\x1b[0m ${eventUrl}`);
+        }
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        console.log(
+          `\x1b[33m\x1b[1m⚠ Calendar event not created:\x1b[0m ${msg}\n` +
+            `  Your court booking succeeded -- only the calendar entry was skipped.`
+        );
+      }
+    }
+
     // 8. Process payment if booking succeeded
     if (result.status === "success") {
       const autoPay = process.argv.includes("--pay");

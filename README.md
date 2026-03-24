@@ -53,6 +53,22 @@ npm run book -- --command "Book me a court this Thursday at 11pm for 1 hour"
 #   -> Date: 2026-03-26, Time: 23:00, Duration: 60min
 ```
 
+### Google Calendar integration (optional)
+
+Optionally add a calendar event to your "NYC TENNIS" Google Calendar after a successful booking. This is entirely optional -- the booker works fine without it. If you skip this setup, just don't use the `--calendar` flag.
+
+Uses the Google Calendar API (not browser automation). If calendar creation fails for any reason, your court booking is not affected -- you'll see a warning but the booking and payment still go through.
+
+```bash
+# Add --calendar flag to any booking command
+npm run book -- --date 2026-03-26 --time 23:00 --duration 60 --calendar
+
+# Or mention it in natural language
+npm run book -- --command "Book Thursday at 11pm and add to calendar"
+```
+
+See [Google Calendar setup](#google-calendar-setup-optional) below for the one-time configuration.
+
 ### Interactive
 
 Run without arguments to get prompted for each field:
@@ -104,6 +120,8 @@ DEBUG=false
 | `COURTRESERVE_PASSWORD` | Yes | Your CourtReserve password |
 | `ANTHROPIC_API_KEY` | No | Enables `--command` natural language input (uses Claude Haiku) |
 | `DEBUG` | No | Set to `true` to run browser in headed mode and enable debug logging |
+| `GOOGLE_CLIENT_ID` | No | OAuth client ID for `--calendar` flag |
+| `GOOGLE_CLIENT_SECRET` | No | OAuth client secret for `--calendar` flag |
 
 ### Verify setup
 
@@ -123,6 +141,7 @@ This opens a visible browser so you can watch the flow. In debug mode, payment i
 | `--time HH:MM` | `-t` | Start time (24-hour) |
 | `--duration 30\|60` | `-n` | Duration in minutes |
 | `--command "..."` | `-c` | Natural language booking request |
+| `--calendar` | | Add booking to Google Calendar (NYC TENNIS) |
 | `--pay` | | Force payment even in DEBUG mode |
 
 ### Examples
@@ -148,6 +167,66 @@ DEBUG=true npm run book -- -d 2026-03-26 -t 23:00 -n 60 --pay
 
 The tool prefers doubles courts over singles (Court 1 is the singles court). Among doubles courts, it picks the lowest-numbered court. If a court is taken, it tries the next one automatically.
 
+## Google Calendar setup (optional)
+
+Skip this entire section if you don't need calendar integration. The booker works without it.
+
+### 1. Create a Google Cloud project
+
+- Go to [Google Cloud Console](https://console.cloud.google.com) and create a new project (e.g. "Tennis Booker")
+
+### 2. Enable the Calendar API
+
+- Go to **APIs & Services > Library**
+- Search "Google Calendar API" and click **Enable**
+
+### 3. Configure OAuth consent screen
+
+- Go to **APIs & Services > OAuth consent screen**
+- Select **External**, click Create
+- Fill in app name, support email, and developer email (all can be your email)
+- Click **Save and Continue** through Scopes and Summary
+- On **Test Users**, click **Add Users** and **add your own Gmail address** -- this is required
+
+### 4. Create OAuth credentials
+
+- Go to **APIs & Services > Credentials**
+- Click **Create Credentials > OAuth client ID**
+- Application type: **Desktop app** (not Web application)
+- Copy the Client ID and Client Secret
+
+### 5. Add credentials to your .env
+
+```
+GOOGLE_CLIENT_ID=123456789-xxxxxxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxx
+```
+
+### 6. Authorize
+
+```bash
+npm run auth:google
+```
+
+This opens your browser for Google consent. Sign in with the Gmail you added as a test user, grant calendar access, and the token saves locally.
+
+### 7. Verify
+
+```bash
+npm run calendar:test
+```
+
+Creates a test event on your NYC TENNIS calendar and immediately deletes it. If this passes, `--calendar` is ready.
+
+### Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| "Access blocked: has not completed the Google verification process" | Add your Gmail as a test user in step 3. The app stays in "Testing" mode (fine for personal use). |
+| "Google Calendar API has not been used in project..." | You missed step 2. Enable the Calendar API in your GCP project. |
+| "Calendar 'NYC TENNIS' not found" | Create a calendar called exactly "NYC TENNIS" in Google Calendar, or check the spelling. |
+| "Not authorized. Run `npm run auth:google` first" | You haven't done step 6 yet, or `.google-tokens.json` was deleted. |
+
 ## Developer guide
 
 ### Project structure
@@ -165,6 +244,7 @@ src/
   retry.ts              # Retry with backoff
   types.ts              # Shared type definitions
   time-utils.ts         # Time conversion utilities
+  calendar.ts           # Google Calendar API integration
   browser/
     client.ts           # Browser launch/close
     auth.ts             # Login flow

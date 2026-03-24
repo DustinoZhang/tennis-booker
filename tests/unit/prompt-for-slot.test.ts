@@ -37,6 +37,7 @@ describe("promptForSlot", () => {
       date: "2026-04-01",
       startTime: "14:00",
       durationMinutes: 90,
+      addToCalendar: false,
     });
     expect(Object.isFrozen(result)).toBe(true);
   });

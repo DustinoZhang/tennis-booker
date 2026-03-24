@@ -23,6 +23,7 @@ export type SlotRequest = {
   readonly date: string; // YYYY-MM-DD
   readonly startTime: string; // HH:MM (24h)
   readonly durationMinutes: number; // 60, 90, or 120
+  readonly addToCalendar?: boolean; // --calendar flag or NL intent
 };
 
 export type TimeSlot = {

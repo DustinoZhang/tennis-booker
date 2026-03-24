@@ -4,6 +4,7 @@ type ParsedSlot = {
   readonly date: string;
   readonly startTime: string;
   readonly durationMinutes: number;
+  readonly addToCalendar?: boolean;
 };
 
 export async function parseNaturalLanguage(
@@ -32,13 +33,14 @@ export async function parseNaturalLanguage(
 
 "${command}"
 
-Return JSON: {"date": "YYYY-MM-DD", "startTime": "HH:MM" (24h), "durationMinutes": number}
+Return JSON: {"date": "YYYY-MM-DD", "startTime": "HH:MM" (24h), "durationMinutes": number, "addToCalendar": boolean}
 
 Rules:
 - "this coming Thursday" means the next Thursday from today
 - "11pm" = "23:00", "7am" = "07:00"
 - "1 hour" = 60, "90 minutes" = 90, "half hour" = 30
 - Default duration is 60 if not specified
+- "addToCalendar" is true if the user mentions "calendar", "add to calendar", "put on calendar", etc. Default false.
 - Only return the JSON object, nothing else`,
       },
     ],
@@ -65,5 +67,6 @@ Rules:
     date: parsed.date,
     startTime: parsed.startTime,
     durationMinutes: parsed.durationMinutes,
+    addToCalendar: parsed.addToCalendar === true,
   };
 }

@@ -91,7 +91,7 @@ async function ask(
 }
 
 type MutableSlotRequest = { date?: string; startTime?: string; durationMinutes?: number };
-type CliArgs = MutableSlotRequest & { command?: string };
+type CliArgs = MutableSlotRequest & { command?: string; calendar?: boolean };
 
 function parseCliArgs(): CliArgs {
   const args = process.argv.slice(2);
@@ -112,6 +112,8 @@ function parseCliArgs(): CliArgs {
     } else if ((arg === "--command" || arg === "-c") && next) {
       result.command = next;
       i++;
+    } else if (arg === "--calendar") {
+      result.calendar = true;
     }
   }
 
@@ -134,7 +136,10 @@ export async function promptForSlot(): Promise<SlotRequest> {
     const durResult = validateDuration(parsed.durationMinutes, parsed.startTime);
     if (durResult !== true) throw new Error(`${durResult} (parsed duration: ${parsed.durationMinutes})`);
 
-    return Object.freeze(parsed);
+    // Calendar intent: explicit --calendar flag OR detected from natural language
+    const addToCalendar = cli.calendar ?? parsed.addToCalendar ?? false;
+
+    return Object.freeze({ ...parsed, addToCalendar });
   }
 
   // If all args provided via CLI, validate and return without prompting
@@ -150,6 +155,7 @@ export async function promptForSlot(): Promise<SlotRequest> {
       date: cli.date,
       startTime: cli.startTime,
       durationMinutes: cli.durationMinutes,
+      addToCalendar: cli.calendar ?? false,
     });
   }
 
@@ -191,6 +197,7 @@ export async function promptForSlot(): Promise<SlotRequest> {
       date,
       startTime,
       durationMinutes,
+      addToCalendar: cli.calendar ?? false,
     });
   } finally {
     rl.close();
