@@ -1,6 +1,7 @@
 import path from "node:path";
 import type { Page } from "playwright";
 import type { TimeSlot } from "../types.js";
+import { captureFailure } from "./diagnostics.js";
 
 const debug = process.env.DEBUG === "true" || process.env.DEBUG === "1";
 
@@ -50,7 +51,18 @@ export async function getAvailableSlots(
   baseUrl: string,
   date: string
 ): Promise<readonly TimeSlot[]> {
-  await page.goto(baseUrl);
+  try {
+    await page.goto(baseUrl);
+  } catch (error) {
+    const screenshotPath = await captureFailure(page, "availability-load");
+    const hint = screenshotPath
+      ? `Check the screenshot at:\n  ${screenshotPath}`
+      : "Could not capture screenshot.";
+    throw new Error(
+      `Failed to load availability page.\n  ${hint}`,
+      { cause: error }
+    );
+  }
   await page.waitForLoadState("networkidle");
 
   // Navigate to the target date via Kendo scheduler API
@@ -143,7 +155,12 @@ export async function clickReserveButton(
     }
   }
 
+  const screenshotPath = await captureFailure(page, "reserve-button-missing");
+  const hint = screenshotPath
+    ? `Check the screenshot at:\n  ${screenshotPath}`
+    : "";
   throw new Error(
-    `Reserve button not found for ${slot.court.name} at ${slot.startTime}`
+    `Reserve button not found for ${slot.court.name} at ${slot.startTime}.` +
+      (hint ? `\n  ${hint}` : "")
   );
 }

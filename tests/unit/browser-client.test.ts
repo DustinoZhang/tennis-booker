@@ -6,6 +6,7 @@ vi.mock("playwright", () => {
   const mockPage = {
     setDefaultNavigationTimeout: vi.fn(),
     setDefaultTimeout: vi.fn(),
+    addInitScript: vi.fn().mockResolvedValue(undefined),
   };
 
   const mockContext = {
@@ -43,7 +44,9 @@ describe("launchBrowser", () => {
   it("launches chromium in headless mode when debug is false", async () => {
     await launchBrowser(baseConfig);
 
-    expect(chromium.launch).toHaveBeenCalledWith({ headless: true });
+    expect(chromium.launch).toHaveBeenCalledWith(
+      expect.objectContaining({ headless: true })
+    );
   });
 
   it("launches chromium in headed mode when debug is true", async () => {
@@ -51,7 +54,9 @@ describe("launchBrowser", () => {
 
     await launchBrowser(debugConfig);
 
-    expect(chromium.launch).toHaveBeenCalledWith({ headless: false });
+    expect(chromium.launch).toHaveBeenCalledWith(
+      expect.objectContaining({ headless: false })
+    );
   });
 
   it("creates a new browser context", async () => {
@@ -105,9 +110,11 @@ describe("launchBrowser", () => {
     await launchBrowser(baseConfig);
 
     const mockBrowser = await (chromium.launch as ReturnType<typeof vi.fn>).mock.results[0]!.value;
-    expect(mockBrowser.newContext).toHaveBeenCalledWith({
-      viewport: { width: 1280, height: 720 },
-    });
+    expect(mockBrowser.newContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        viewport: { width: 1280, height: 720 },
+      })
+    );
   });
 });
 

@@ -285,10 +285,8 @@ describe("processPayment", () => {
 
     const result = await processPayment(page as never);
 
-    expect(result).toEqual({
-      status: "error",
-      message: "Payment failed: net::ERR_CONNECTION_REFUSED",
-    });
+    expect(result.status).toBe("error");
+    expect(result.message).toContain("Payment failed: net::ERR_CONNECTION_REFUSED");
   });
 
   it("handles non-Error thrown values", async () => {
@@ -297,10 +295,8 @@ describe("processPayment", () => {
 
     const result = await processPayment(page as never);
 
-    expect(result).toEqual({
-      status: "error",
-      message: "Payment failed: Unknown payment error",
-    });
+    expect(result.status).toBe("error");
+    expect(result.message).toContain("Payment failed: Unknown payment error");
   });
 
   it("waits 3 seconds after clicking the pay button", async () => {

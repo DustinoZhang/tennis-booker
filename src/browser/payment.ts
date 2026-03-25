@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { Page } from "playwright";
+import { captureFailure } from "./diagnostics.js";
 
 const debug = process.env.DEBUG === "true" || process.env.DEBUG === "1";
 
@@ -115,10 +116,14 @@ export async function processPayment(page: Page): Promise<PaymentResult> {
       message: `Payment of ${amount} submitted`,
     };
   } catch (error) {
+    const screenshotPath = await captureFailure(page, "payment-failure");
     const message = error instanceof Error ? error.message : "Unknown payment error";
+    const hint = screenshotPath
+      ? `\n  Screenshot: ${screenshotPath}`
+      : "";
     return {
       status: "error",
-      message: `Payment failed: ${message}`,
+      message: `Payment failed: ${message}${hint}`,
     };
   }
 }

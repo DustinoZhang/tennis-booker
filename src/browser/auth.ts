@@ -1,6 +1,7 @@
 import type { Page } from "playwright";
 import type { Config } from "../config.js";
 import { LOGIN, MY_RESERVATIONS } from "./selectors.js";
+import { captureFailure } from "./diagnostics.js";
 
 function deriveLoginUrl(baseUrl: string): string {
   return baseUrl.replace("/Reservations/Index/", "/Account/Login/");
@@ -10,7 +11,21 @@ export async function login(page: Page, config: Config): Promise<void> {
   const loginUrl = deriveLoginUrl(config.baseUrl);
   await page.goto(loginUrl);
 
-  await page.locator(LOGIN.EMAIL_INPUT).fill(config.username);
+  try {
+    await page.locator(LOGIN.EMAIL_INPUT).fill(config.username);
+  } catch (error) {
+    const screenshotPath = await captureFailure(page, "login-failure");
+    const hint = screenshotPath
+      ? `Check the screenshot at:\n  ${screenshotPath}`
+      : "Could not capture screenshot.";
+    throw new Error(
+      `Could not find email input on login page.\n` +
+        `  The site may have changed or is blocking automated access.\n` +
+        `  ${hint}`,
+      { cause: error }
+    );
+  }
+
   await page.locator(LOGIN.PASSWORD_INPUT).fill(config.password);
   await page.locator(LOGIN.CONTINUE_BUTTON).click();
 

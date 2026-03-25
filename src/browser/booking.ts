@@ -1,5 +1,6 @@
 import type { Page } from "playwright";
 import type { TimeSlot, BookingResult } from "../types.js";
+import { captureFailure } from "./diagnostics.js";
 
 const debug = process.env.DEBUG === "true" || process.env.DEBUG === "1";
 
@@ -138,11 +139,15 @@ export async function bookSlot(
       slot,
     };
   } catch (error) {
+    const screenshotPath = await captureFailure(page, "booking-failure");
     const message =
       error instanceof Error ? error.message : "Unknown booking error";
+    const hint = screenshotPath
+      ? `\n  Screenshot: ${screenshotPath}`
+      : "";
     return {
       status: "error",
-      message: `Booking failed: ${message}`,
+      message: `Booking failed: ${message}${hint}`,
       slot,
     };
   }
